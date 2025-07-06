@@ -1,0 +1,43 @@
+# Arquivos de desenvolvimento
+*.md
+!README.md
+
+# Scripts de desenvolvimento
+*.sh
+test-*.js
+simple-*.js
+check-*.js
+status-*.js
+install-deps.js
+run-test.js
+start-system.js
+
+# Configurações de outras plataformas
+render.yaml
+.env.example
+
+# Arquivos temporários
+.DS_Store
+*.log
+*.tmp
+
+# Documentação
+COMO-EXECUTAR.md
+EXECUTAR.md
+INSTRUCOES.md
+DEPLOY-GUIDE.md
+GITHUB-ACTIONS-SETUP.md
+OPCOES-DEPLOY.md
+CI-CD-SUMMARY.md
+deploy-config.md
+github-secrets-guide.md
+railway-token-guide.md
+setup-github-secrets.md
+test-github-actions.md
+COMPREHENSIVE-PIPELINE-ANALYSIS.md
+PIPELINE-FIX-PLAN.md
+
+# Build artifacts que serão recriados
+frontend/build/
+backend/node_modules/
+frontend/node_modules/
