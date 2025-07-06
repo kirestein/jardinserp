@@ -3,13 +3,16 @@ nixPkgs = ['nodejs-18_x', 'npm-9_x']
 
 [phases.install]
 cmds = [
+    'npm install',
     'cd backend && npm ci',
     'cd frontend && npm ci'
 ]
 
 [phases.build]
 cmds = [
-    'cd frontend && npm run build'
+    'cd frontend && npm run build',
+    'ls -la frontend/',
+    'ls -la frontend/build/ || echo "Build folder not found"'
 ]
 
 [start]
