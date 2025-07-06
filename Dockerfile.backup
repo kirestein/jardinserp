@@ -1,0 +1,29 @@
+# Dockerfile de backup para Railway
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar package.json files
+COPY backend/package*.json ./backend/
+COPY frontend/package*.json ./frontend/
+COPY package*.json ./
+
+# Instalar dependências
+RUN npm install
+RUN cd backend && npm ci --only=production
+RUN cd frontend && npm ci
+
+# Copiar código fonte
+COPY backend/ ./backend/
+COPY frontend/ ./frontend/
+COPY server-production.js ./
+
+# Build frontend
+RUN cd frontend && npm run build
+
+# Limpar node_modules do frontend após build
+RUN rm -rf frontend/node_modules
+
+EXPOSE 3001
+
+CMD ["node", "server-production.js"]
