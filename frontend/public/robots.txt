@@ -1,0 +1,5 @@
+# User-agent: *
+# Allow: /
+
+# Este é um arquivo robots.txt básico
+# Permitindo acesso total aos crawlers
