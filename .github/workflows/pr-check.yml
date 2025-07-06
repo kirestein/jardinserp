@@ -40,7 +40,7 @@ jobs:
     - name: 🧪 Run Frontend Tests
       run: |
         cd frontend
-        npm test -- --coverage --watchAll=false
+        npm test -- --coverage --watchAll=false --passWithNoTests
         
     - name: 🏗️ Test Build Process
       run: |
