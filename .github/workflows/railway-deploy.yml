@@ -1,0 +1,128 @@
+name: 🚂 Railway Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # Permite execução manual
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  deploy:
+    name: 🚀 Build and Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          backend/package-lock.json
+          frontend/package-lock.json
+    
+    - name: 🔧 Install Dependencies
+      run: |
+        echo "📦 Installing backend dependencies..."
+        cd backend && npm ci
+        cd ..
+        
+        echo "📦 Installing frontend dependencies..."
+        cd frontend && npm ci
+        cd ..
+        
+    - name: 🧪 Run Tests
+      run: |
+        echo "🧪 Running backend tests..."
+        cd backend && npm test --if-present
+        cd ..
+        
+        echo "🧪 Running frontend tests..."
+        cd frontend && npm test -- --coverage --watchAll=false --passWithNoTests
+        cd ..
+        
+    - name: 🏗️ Build Frontend
+      run: |
+        echo "🏗️ Building frontend for production..."
+        cd frontend
+        npm run build
+        
+        echo "📊 Build size:"
+        du -sh build/
+        ls -la build/
+        cd ..
+        
+    - name: 🔧 Prepare Production Files
+      run: |
+        echo "🔧 Creating production package.json..."
+        cat > package.json << 'EOF'
+        {
+          "name": "sistema-funcionarios-production",
+          "version": "1.0.0",
+          "description": "Sistema de Funcionários - Railway Deploy",
+          "main": "server-production.js",
+          "scripts": {
+            "start": "node server-production.js",
+            "build": "echo 'Build completed in CI'",
+            "postinstall": "cd backend && npm install --only=production"
+          },
+          "dependencies": {
+            "express": "^4.18.2",
+            "cors": "^2.8.5",
+            "sqlite3": "^5.1.6",
+            "bcryptjs": "^2.4.3",
+            "jsonwebtoken": "^9.0.2",
+            "multer": "^1.4.5-lts.1",
+            "uuid": "^9.0.1"
+          },
+          "engines": {
+            "node": ">=18.0.0"
+          }
+        }
+        EOF
+        
+        echo "✅ Production package.json created"
+        
+    - name: 🚂 Install Railway CLI
+      run: |
+        npm install -g @railway/cli
+        
+    - name: 🚀 Deploy to Railway
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        echo "🚂 Deploying to Railway..."
+        railway login --token $RAILWAY_TOKEN
+        railway up --detach
+        
+    - name: 📊 Deployment Summary
+      if: success()
+      run: |
+        echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Status:** Deployed to Railway" >> $GITHUB_STEP_SUMMARY
+        echo "📅 **Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "👤 **Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 **Commit:** [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Links Úteis" >> $GITHUB_STEP_SUMMARY
+        echo "- 🚂 [Railway Dashboard](https://railway.app/dashboard)" >> $GITHUB_STEP_SUMMARY
+        echo "- 📋 [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+        echo "- 📊 [Actions](https://github.com/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+        
+    - name: ❌ Deployment Failed
+      if: failure()
+      run: |
+        echo "## ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "O deploy falhou. Verifique os logs acima para mais detalhes." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Possíveis Soluções:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Verificar se o RAILWAY_TOKEN está configurado" >> $GITHUB_STEP_SUMMARY
+        echo "2. Confirmar se o projeto Railway existe" >> $GITHUB_STEP_SUMMARY
+        echo "3. Testar o build localmente" >> $GITHUB_STEP_SUMMARY

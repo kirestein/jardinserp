@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: sistema-funcionarios
+    env: node
+    plan: free
+    buildCommand: npm install && cd frontend && npm install && npm run build
+    startCommand: node server-production.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000

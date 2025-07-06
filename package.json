@@ -1,0 +1,22 @@
+{
+  "name": "sistema-funcionarios",
+  "version": "1.0.0",
+  "description": "Sistema completo de gerenciamento de funcionários com geração de crachás",
+  "scripts": {
+    "start": "chmod +x start.sh && ./start.sh",
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm start",
+    "build": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "funcionarios",
+    "rh",
+    "cracha",
+    "gestao",
+    "react",
+    "nodejs"
+  ],
+  "author": "Sistema de Funcionários",
+  "license": "MIT"
+}

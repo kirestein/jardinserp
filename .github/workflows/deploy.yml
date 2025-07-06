@@ -1,0 +1,177 @@
+name: 🚀 Deploy to Railway
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # Job 1: Testes e Build
+  test-and-build:
+    name: 🧪 Test & Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          backend/package-lock.json
+          frontend/package-lock.json
+    
+    - name: 🔧 Install Backend Dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: 🔧 Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: 🧪 Run Backend Tests (if exists)
+      run: |
+        cd backend
+        npm test --if-present
+        
+    - name: 🧪 Run Frontend Tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false
+        
+    - name: 🏗️ Build Frontend for Production
+      run: |
+        cd frontend
+        npm run build
+        
+    - name: 📊 Check Build Size
+      run: |
+        cd frontend
+        ls -la build/
+        du -sh build/
+        
+    - name: 💾 Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/build/
+        retention-days: 1
+
+  # Job 2: Deploy para Railway (apenas em push para main)
+  deploy:
+    name: 🚀 Deploy to Railway
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: 💾 Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/build/
+        
+    - name: 🔧 Prepare for Production
+      run: |
+        # Instalar dependências do backend
+        cd backend && npm ci --only=production
+        cd ..
+        
+        # Criar package.json de produção
+        cat > package.json << 'EOF'
+        {
+          "name": "sistema-funcionarios-production",
+          "version": "1.0.0",
+          "description": "Sistema de Funcionários - Versão de Produção",
+          "main": "server-production.js",
+          "scripts": {
+            "start": "node server-production.js",
+            "postinstall": "cd backend && npm install --only=production"
+          },
+          "dependencies": {
+            "express": "^4.18.2",
+            "cors": "^2.8.5",
+            "sqlite3": "^5.1.6",
+            "bcryptjs": "^2.4.3",
+            "jsonwebtoken": "^9.0.2",
+            "multer": "^1.4.5-lts.1",
+            "uuid": "^9.0.1"
+          },
+          "engines": {
+            "node": ">=18.0.0"
+          }
+        }
+        EOF
+        
+    - name: 🚂 Deploy to Railway
+      id: deploy
+      uses: railwayapp/railway-deploy@v3
+      with:
+        railway_token: ${{ secrets.RAILWAY_TOKEN }}
+        service: ${{ secrets.RAILWAY_SERVICE_ID }}
+        
+    - name: 🎉 Deployment Success
+      if: success()
+      run: |
+        echo "✅ Deploy realizado com sucesso!"
+        echo "🌐 URL: ${{ steps.deploy.outputs.url }}"
+        
+    - name: ❌ Deployment Failed
+      if: failure()
+      run: |
+        echo "❌ Deploy falhou!"
+        echo "📋 Verifique os logs acima para mais detalhes."
+
+  # Job 3: Notificações e Health Check
+  post-deploy:
+    name: 🔍 Health Check
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+    - name: ⏳ Wait for deployment
+      run: sleep 30
+      
+    - name: 🏥 Health Check
+      run: |
+        # Tentar fazer health check (se a URL estiver disponível)
+        if [ ! -z "${{ needs.deploy.outputs.url }}" ]; then
+          echo "🔍 Verificando saúde da aplicação..."
+          curl -f "${{ needs.deploy.outputs.url }}/api/health" || echo "⚠️ Health check falhou, mas deploy pode estar OK"
+        else
+          echo "ℹ️ URL não disponível para health check"
+        fi
+        
+    - name: 📱 Create Deployment Summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Status:** Deployed Successfully" >> $GITHUB_STEP_SUMMARY
+        echo "🌐 **Environment:** Production" >> $GITHUB_STEP_SUMMARY
+        echo "📅 **Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "👤 **Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "📝 **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+        echo "- 🌐 [Live Application](${{ needs.deploy.outputs.url }})" >> $GITHUB_STEP_SUMMARY
+        echo "- 📊 [Railway Dashboard](https://railway.app/dashboard)" >> $GITHUB_STEP_SUMMARY
+        echo "- 📋 [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY

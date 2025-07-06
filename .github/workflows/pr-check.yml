@@ -1,0 +1,74 @@
+name: 🔍 PR Quality Check
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  quality-check:
+    name: 🧪 Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          backend/package-lock.json
+          frontend/package-lock.json
+    
+    - name: 🔧 Install Backend Dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: 🔧 Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: 🧪 Run Backend Tests
+      run: |
+        cd backend
+        npm test --if-present
+        
+    - name: 🧪 Run Frontend Tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false
+        
+    - name: 🏗️ Test Build Process
+      run: |
+        cd frontend
+        npm run build
+        
+    - name: 📊 Bundle Size Analysis
+      run: |
+        cd frontend
+        echo "## 📊 Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Build Output:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        ls -la build/static/js/ | head -10 >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Total Size:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        du -sh build/ >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        
+    - name: 🔍 Code Quality Summary
+      run: |
+        echo "## ✅ Code Quality Check Passed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Backend dependencies installed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Frontend dependencies installed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Tests executed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Build process completed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🚀 **Ready for merge and deploy!**" >> $GITHUB_STEP_SUMMARY
