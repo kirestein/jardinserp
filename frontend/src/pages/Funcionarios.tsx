@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { funcionarioService, cargoService } from '../services/api';
 import { Funcionario, Cargo } from '../types';
 import { toast } from 'react-toastify';
-import { Plus, Edit, Trash2, Users, CreditCard, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 
 const Funcionarios: React.FC = () => {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
