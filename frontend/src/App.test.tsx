@@ -8,6 +8,9 @@ test('math operations work correctly', () => {
   expect(5 * 3).toBe(15);
 });
 
+// Export vazio para tornar este arquivo um módulo (necessário para isolatedModules)
+export {};
+
 test('string operations work correctly', () => {
   expect('hello' + ' world').toBe('hello world');
   expect('test'.length).toBe(4);
