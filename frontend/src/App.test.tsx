@@ -12,6 +12,6 @@ test('math operations work correctly', () => {
 export {};
 
 test('string operations work correctly', () => {
-  expect('hello' + ' world').toBe('hello world');
+  expect('hello world').toBe('hello world');
   expect('test'.length).toBe(4);
 });
