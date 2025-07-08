@@ -9,7 +9,10 @@
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm start",
     "build": "cd frontend && npm run build",
-    "postinstall": "cd backend && npm install && cd ../frontend && npm install && npm run build"
+    "postinstall": "cd backend && npm install && cd ../frontend && npm install && npm run build",
+    "test:db": "cd backend && node test-postgres.js",
+    "migrate:db": "cd backend && node migrate-to-postgres.js",
+    "setup:db": "npm run test:db && npm run migrate:db"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
