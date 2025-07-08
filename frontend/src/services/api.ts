@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { AuthResponse, LoginData, RegisterData, Cargo, Funcionario } from '../types';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+// Configuração da URL base da API
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api'  // Em produção, usa a mesma origem
+  : 'http://localhost:3001/api';  // Em desenvolvimento, usa localhost
 
 const api = axios.create({
   baseURL: API_BASE_URL,
